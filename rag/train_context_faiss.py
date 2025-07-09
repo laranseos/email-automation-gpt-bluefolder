@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 import shutil
 import base64
 from pathlib import Path
@@ -11,6 +12,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.schema import Document
 from langchain.vectorstores import FAISS
 from langchain_openai import OpenAIEmbeddings
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'services')))
 
 from gmail_auth import get_gmail_service
 
