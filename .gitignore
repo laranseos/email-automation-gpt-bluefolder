@@ -1,0 +1,18 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# OpenAI and Gmail secrets
+services/credentials.json
+services/token.json
+
+# RAG input PDFs and vector DB
+rag/data/
+rag/chroma_db/
+rag/faiss_index/
+
+# VSCode settings (optional)
+.vscode/
