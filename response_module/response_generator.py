@@ -6,10 +6,8 @@ from typing import List, Dict
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
-from langchain_community.vectorstores import Chroma
 from langchain_openai import ChatOpenAI
-
-from utils.embedding import get_embedding_function  # your embedding func
+from utils.vector_search import search_vector_store
 
 CHROMA_PATH = "../rag/chroma_db"
 
@@ -63,11 +61,11 @@ SERVICE_PROMPTS = {
 
 def generate_email_reply(data: dict, category: int, matches: List) -> Dict[str, str]:
     """
-    Generate a reply email using GPT-4 with contextual information,
-    extracting first name from sender info and email content,
-    combining category and service instructions.
+    Generate a reply email using GPT-4 with contextual information.
+    Debugging version with step-by-step logs.
     """
 
+    print("[DEBUG] Extracting email fields...")
     subject = data.get("subject", "")
     body = data.get("body", "")
     sender_name = data.get("sender_name", "")
@@ -77,12 +75,13 @@ def generate_email_reply(data: dict, category: int, matches: List) -> Dict[str, 
     category_desc = CATEGORY_DESCRIPTIONS.get(category, "General inquiry")
     service_instructions = SERVICE_PROMPTS.get(service_type, SERVICE_PROMPTS["General Support"])
     prompt_instructions = f"Email category: {category_desc}.\nService type: {service_type}.\nInstructions: {service_instructions}"
+    print(f"[INFO] Category {category} → {service_type}")
+    print(f"[INFO] Prompt instructions:\n{prompt_instructions}")
 
     if service_type == "Spam":
-        # No reply for spam
+        print("[INFO] Message marked as spam. No reply needed.")
         return {"subject": "", "body": ""}
 
-    # Prepare matched service info summary if available
     if matches:
         top_match = matches[0][1]
         match_info = (
@@ -92,16 +91,14 @@ def generate_email_reply(data: dict, category: int, matches: List) -> Dict[str, 
         )
     else:
         match_info = "No matching service request found."
+    print(f"[INFO] Matched service info: {match_info}")
 
-    # Load Chroma vector DB and perform similarity search
-    db = Chroma(persist_directory=CHROMA_PATH, embedding_function=get_embedding_function())
-    results = db.similarity_search_with_score(body, k=3)
-    relevant_docs = [doc for doc, score in results if score >= 0.3]
+    print("\n[DEBUG] Loading Chroma DB and running similarity search...")
 
-    # If no relevant context, send simple fallback reply
-    # Combine relevant context text
+    relevant_docs = search_vector_store(body, num_results=3, similarity_threshold=0.7)
     context_text = "\n".join([doc.page_content for doc in relevant_docs])
 
+    print("\n[DEBUG] Preparing prompt for GPT-4...")
     prompt_template = PromptTemplate(
         input_variables=["sender_name", "sender_email", "subject", "email", "context", "instructions", "match_info"],
         template="""
@@ -138,6 +135,7 @@ Reply:
 """
     )
 
+    print("[INFO] Invoking GPT-4 chain...")
     chain = (
         RunnablePassthrough.assign(
             context=RunnableLambda(lambda x: context_text),
@@ -149,12 +147,17 @@ Reply:
         | StrOutputParser()
     )
 
-    final_body = chain.invoke({
-        "sender_name": sender_name,
-        "sender_email": sender_email,
-        "subject": subject,
-        "email": body
-    })
+    try:
+        final_body = chain.invoke({
+            "sender_name": sender_name,
+            "sender_email": sender_email,
+            "subject": subject,
+            "email": body
+        })
+        print("[SUCCESS] GPT-4 generated reply successfully.")
+    except Exception as e:
+        print(f"[ERROR] GPT-4 failed to generate response: {e}")
+        final_body = "Hi there,\n\nWe received your message and will get back to you shortly.\n\n– Ron McDonnell"
 
     return {
         "subject": f"Re: {subject}",
