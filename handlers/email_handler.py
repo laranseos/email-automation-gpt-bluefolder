@@ -7,7 +7,7 @@ from handlers.categorizer import categorize_email
 from handlers.parser import parse_email_with_gpt
 from services.bluefolder_api import get_all_service_requests, match_service_requests
 from utils.email_utils import extract_email_info, mark_as_read, send_reply
-from templates.response_generator import generate_email_reply
+from response_module.response_generator import generate_email_reply
 
 import json
 from dotenv import load_dotenv
@@ -55,8 +55,11 @@ def handle_email(service, msg_id: str):
         )
 
         # Step 6: Generate reply
-        reply_body = generate_email_reply(category, matches)
-        send_reply(service, to_email=sender_email, thread_id=data["thread_id"], msg_text=reply_body)
+        reply_data = generate_email_reply(data, category, matches)
+
+        subject = reply_data["subject"]
+        body = reply_data["body"]
+        send_reply(service, to_email=sender_email, thread_id=data["thread_id"], body=body, subject=subject)
 
         # Step 7: Mark email as read
         mark_as_read(service, msg_id)

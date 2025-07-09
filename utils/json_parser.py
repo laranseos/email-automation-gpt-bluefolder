@@ -7,7 +7,6 @@ def safe_parse_gpt_json(content: str) -> dict:
     Returns a dictionary or a fallback error dict on failure.
     """
     try:
-        print("🔧 Raw GPT content:\n", content)
 
         # Extract JSON from markdown-style block
         match = re.search(r"```(?:json)?\s*({.*?})\s*```", content, re.DOTALL)

@@ -15,7 +15,7 @@ from langchain_openai import OpenAIEmbeddings
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'services')))
 
-from gmail_auth import get_gmail_service
+from services.gmail_auth import get_gmail_service
 
 # Load environment variables
 print("[INFO] Loading environment variables...")
