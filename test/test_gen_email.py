@@ -15,8 +15,7 @@ def test_generate_email_reply():
         "subject": "Request for Repair Quote",
         "body": (
             "Hello,\n"
-            "I'd like to get a quote for repairing our gym treadmill. "
-            "Can someone provide details?\nThanks!"
+            "How about my service request status?\n"
         )
     }
 
@@ -26,7 +25,7 @@ def test_generate_email_reply():
     # Dummy Bluefolder matches, format: list of (score, dict) tuples
     matches = [
         (0.85, {
-            "id": "SR12345",
+            "id": "52014",
             "customerName": "Jane Doe",
             "status": "Open"
         })

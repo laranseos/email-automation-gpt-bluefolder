@@ -8,6 +8,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 from langchain_openai import ChatOpenAI
 from utils.vector_search import search_vector_store
+from utils.service_request import get_service_request_details
 
 CHROMA_PATH = "../rag/chroma_db"
 
@@ -47,11 +48,85 @@ CATEGORY_DESCRIPTIONS = {
 
 # Instructions per service type
 SERVICE_PROMPTS = {
-    "Repairs": "We received a repair-related request. Address it clearly. Confirm any possible action. Reference matched service request info if available.",
-    "Schedule Confirmations": "This is a schedule confirmation or time proposal. Confirm time if reasonable and ask for entry access if needed.",
-    "Preventive Maintenance": "This is a preventive maintenance inquiry. Confirm the visit, ask about equipment issues, entry access, and point of contact.",
-    "Repair Complete": "Customer is likely following up after a repair. Reassure them the repair is complete or in progress. Provide reference if possible.",
-    "End of Life - Decommissioning": "This involves machines beyond support. Politely explain decommissioning, safety concerns, and recommend replacement options.",
+                    "Repairs": """
+                                Upbeat vibe
+                                Simple language
+                                Common fitness issues that can be averted with proper maintenance
+                                Home Owner Association Boards & Management
+                                How we can augment property staff to off load
+                                Email format
+                                Overcome objections
+                                What vendor setup does the property require
+                                Ask if there is any current issues with the fitness equipment causing frustration
+                                Ask what keys/fobs or entry requirements are to make a visit more streamlined
+                                Who would be the contacts that confirm scheduled visits, approve any repairs and pay invoices
+                                What preventive maintenance cycle is the client budgetted for
+                                Discuss how older machines have a lifespan and how that impacts support
+                                Best regards,
+                                Ron McDonnell
+                                Pronto Gym Services, Inc.
+                                Choose@prontogymservices.com
+                                888-733-8510; ext. 2
+                            """,
+    "Schedule Confirmations": """
+                                Upbeat confirmations
+                                Add "Fitness Equipment" with the subject line
+                                Give 3 hour window 3 hour window starting 1/2 hour before the beginning of the scheduled timeslot
+                                Ask if there is any unreported issues with the fitness equipment to address
+                                Ask what keys/fobs or entry requirements are to make the visit more streamlined
+                                Ask if there have been any contact changes
+                                Email format
+                                Reformat the email without any hyperlinks—just plain text.
+                                Only list ASSIGNED TO technician
+                                identify explain any out of stock
+                                Identify and communicate outstanding invoice for this client and what needs to happen
+                                Best regards,
+                                Gerume Bekele
+                                Pronto Gym Services, Inc.
+                                Schedule@prontogymservices.com
+                                888-733-8510; ext. 1
+                            """,
+    "Preventive Maintenance": """
+                                Upbeat vibe
+                                Simple language
+                                Common fitness issues that can be averted with proper maintenance
+                                How we can augment property staff to off load
+                                Email format
+                                Overcome objections
+                                What vendor setup does the property require
+                                Ask if there is any current issues with the fitness equipment causing frustration
+                                Ask what keys/fobs or entry requirements are to make a visit more streamlined
+                                Who would be the contacts that confirm scheduled visits, approve any repairs and pay invoices
+                                What preventive maintenance cycle is the client budgeted for
+                                Discuss how older machines have a lifespan and how that impacts support
+                                Best regards,
+                                Ron McDonnell
+                                Pronto Gym Services, Inc.
+                                Choose@prontogymservices.com
+                                888-733-8510; ext. 2
+                                """,
+    "Repair Complete": """
+                        Upbeat success,  Email Format, Technician assigned: ,  PO, Equipment worked on what was tested Resolved and tested
+                        """,
+    "End of Life - Decommissioning": """
+                                Email format
+                                Simple language
+                                End of Life means manufacturer no longer supports/has replacement parts, Aftermarket replacement parts are limited to not available.
+                                Nautilus Strength & Green series Went out of business
+                                All product that is designated end of life and has current safety issues determined by a technician should be decommissioned and removed from the facility.
+                                Using equipment list indicate all machines age status
+                                Continued use creates a safety hazard for users and significant liability exposure for ownership
+                                BH Fitness No Longer has Support In the US
+                                When possible highlight the age of each machine
+                                the email no hyperlinks, just plain text
+                                Subject line to include client location name
+                                use upbeat language while discussing how much value these capital units held to this point
+                                Offer help to obtain replacement equipment
+                                Ron McDonnell
+                                Pronto Gym Services
+                                (888) 733-8510
+                                choose@prontogymservices.com        
+                            """,
     "Cancellations": "Customer is cancelling a visit. Confirm the cancellation. Ask if they’d like to reschedule.",
     "General Support": "Customer has a general question. Respond briefly with support info or let them know you’re looking into it.",
     "Invoice or Billing": "Respond to invoice or billing issues. Reference invoice # or status if available.",
@@ -81,17 +156,19 @@ def generate_email_reply(data: dict, category: int, matches: List) -> Dict[str, 
     if service_type == "Spam":
         print("[INFO] Message marked as spam. No reply needed.")
         return {"subject": "", "body": ""}
-
+    
     if matches:
         top_match = matches[0][1]
-        match_info = (
-            f"Service Request ID: {top_match.get('id', 'N/A')}, "
-            f"Customer: {top_match.get('customerName', 'N/A')}, "
-            f"Status: {top_match.get('status', 'N/A')}"
-        )
+        service_request_id = top_match.get("id")
+
+        if service_request_id:
+            service_request = get_service_request_details(service_request_id)
+            print("[INFO] Full Service Request Data:")
+            print(service_request)
+        else:
+            service_request = None
     else:
-        match_info = "No matching service request found."
-    print(f"[INFO] Matched service info: {match_info}")
+        service_request = None
 
     print("\n[DEBUG] Loading Chroma DB and running similarity search...")
 
@@ -100,7 +177,7 @@ def generate_email_reply(data: dict, category: int, matches: List) -> Dict[str, 
 
     print("\n[DEBUG] Preparing prompt for GPT-4...")
     prompt_template = PromptTemplate(
-        input_variables=["sender_name", "sender_email", "subject", "email", "context", "instructions", "match_info"],
+        input_variables=["sender_name", "sender_email", "subject", "email", "context", "instructions", "service_request"],
         template="""
 You are an automated assistant for Pronto Gym Services.
 
@@ -117,19 +194,33 @@ Then, using the extracted first name, generate a short, friendly, helpful email 
 Relevant company documents:
 {context}
 
-Matched service info:
-{match_info}
+service request service info related to Customer:
+{service_request}
+You have access to the full `service_request` dictionary.
+It includes:
+- Customer contact info (`customerContactName`, `customerContactEmail`, `customerContactPhone`)
+- Facility/location info (`customerLocationName`, `customerLocationStreetAddress`, `customerLocationCity`, `customerLocationState`)
+- Request type, description, and status (`description`, `detailedDescription`, `status`, `type`)
+- Timestamps (`dateTimeCreated`, `statusLastUpdated`, `timeOpen`)
+- Optional fields like PO number, billing address, and internal notes
+Use this data to write a clear, contextual response related to repairs, PM, scheduling, or status.
 
 Reply instructions:
 {instructions}
 
 Guidelines:
-- Use simple, friendly language.
-- No hyperlinks, plain text only.
-- Keep reply under 80 words.
-- Sign as Ron McDonnell, Pronto Gym Services.
-
-Start your reply with: "Hi [First Name],"
+- Use simple, professional, and friendly language.
+- Always start with: "Hi [First Name],"
+- Focus only on the core message—no filler, no small talk.
+- No hyperlinks—use plain text only.
+- Maintain brand tone: clear, helpful, confident.
+- Use line breaks for readability.
+- Use service request info to reply
+Sign off with as usual if not mentioned on instructions :
+Ron McDonnell  
+Pronto Gym Services  
+📞 (888) 733-8510  
+✉️ choose@prontogymservices.com
 
 Reply:
 """
@@ -140,7 +231,7 @@ Reply:
         RunnablePassthrough.assign(
             context=RunnableLambda(lambda x: context_text),
             instructions=RunnableLambda(lambda x: prompt_instructions),
-            match_info=RunnableLambda(lambda x: match_info)
+            service_request=RunnableLambda(lambda x: service_request)
         )
         | prompt_template
         | ChatOpenAI(model="gpt-4", temperature=0.3)
