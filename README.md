@@ -1,6 +1,6 @@
 # Email Automation and Retrieval System
 
-This project is an advanced email automation and retrieval system that integrates with Gmail, OpenAI, and BlueFolder APIs. It uses LangChain for document processing and FAISS/Chroma for vector-based search, enabling efficient handling of emails, categorization, and automated replies.
+This project is an advanced email automation and retrieval system that integrates with Gmail, OpenAI, and BlueFolder APIs. It uses LangChain for document processing and Chroma for vector-based search, enabling efficient handling of emails, categorization, and automated replies.
 
 ---
 
@@ -9,7 +9,7 @@ This project is an advanced email automation and retrieval system that integrate
 - **Email Parsing**: Extract structured information from emails using GPT-based parsing.
 - **Categorization**: Automatically categorize emails based on their content.
 - **Blacklist Handling**: Ignore emails from blacklisted senders.
-- **Service Request Matching**: Match emails with BlueFolder service requests.
+- **Service Request Fetching**: Fetch emails with BlueFolder service requests.
 - **Automated Replies**: Generate and send replies based on parsed information and matched service requests.
 - **Vector Search**: Retrieve relevant documents using FAISS and Chroma vector stores (RAG-based retrieval).
 
@@ -28,10 +28,11 @@ This project is an advanced email automation and retrieval system that integrate
 
 1. **Clone the repository:**
 
-`   git clone https://github.com/laranseos/email-automation-gpt-bluefolder.git`
-`   cd email-automation-gpt-bluefolder`
+   `git clone https://github.com/laranseos/email-automation-gpt-bluefolder.git`
 
-2.  **Install dependencies:**
+   `cd email-automation-gpt-bluefolder`
+
+2. **Install dependencies:**
 
 pip install -r requirements.txt
 
@@ -41,8 +42,9 @@ Create a .env file in the root directory.
 
 Add the following:
 
-`OPENAI_API_KEY=your-openai-api-key`
-`BLUEFOLDER_API_TOKEN=your-bluefolder-api-token`
+    `OPENAI_API_KEY=your-openai-api-key`
+
+    `BLUEFOLDER_API_TOKEN=your-bluefolder-api-token`
 
 4. **Configure Gmail API:**
 
@@ -53,7 +55,7 @@ Place credentials.json and token.json in the services/ directory (you will be pr
 1.  **Train Context for Vector Search**
     To build the FAISS or Chroma vector store from PDF data:
 
-        `python rag/train_context_faiss.py`
+        `python rag/train_context.py`
 
 2.  **Process Emails**
     To fetch and process unread emails:
