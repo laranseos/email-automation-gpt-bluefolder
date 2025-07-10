@@ -1,0 +1,23 @@
+# Core libraries
+requests
+python-dotenv
+google-auth
+google-auth-oauthlib
+google-api-python-client
+
+# LangChain & integrations
+langchain
+langchain-core
+langchain-community
+langchain-openai
+langchain-chroma
+
+# FAISS (for vector store)
+faiss-cpu  # or faiss-gpu if you're using GPU
+
+# Document processing
+docx2txt
+PyPDF2  # used internally by PyPDFLoader
+unstructured  # (optional, sometimes required for complex PDF parsing)
+
+# Others (standard library imports don't need to be included)
