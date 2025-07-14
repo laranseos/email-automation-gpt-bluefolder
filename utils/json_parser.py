@@ -28,10 +28,3 @@ def safe_parse_gpt_json(content: str) -> dict:
             "raw_output": content,
             "exception": str(e)
         }
-def save_json(file_path: str, data):
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-
-def load_json(file_path: str):
-    with open(file_path, "r", encoding="utf-8") as f:
-        return json.load(f)

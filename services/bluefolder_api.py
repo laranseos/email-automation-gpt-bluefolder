@@ -7,7 +7,6 @@ import xml.etree.ElementTree as ET
 from difflib import SequenceMatcher
 from datetime import datetime, timedelta
 import re
-from utils.json_parser import save_json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -162,63 +161,3 @@ def display_matches(matches, limit=5):
             print(f"  ➤ Total Raw Score: {total:.2f}")
 
         print("-" * 120)
-
-def fetch_all_assignments() -> list:
-    """
-    Fetches all assignments from BlueFolder for the next year.
-    Returns a list of dicts and saves to local JSON.
-    """
-    print("\n🔄 [INFO] Fetching assignments from BlueFolder...")
-
-    start = datetime.now().strftime("%Y-%m-%dT00:00:00")
-    end = (datetime.now() + timedelta(days=30)).strftime("%Y-%m-%dT23:59:59")
-
-    xml_body = f"""
-    <request>
-        <serviceRequestAssignmentList>
-            <dateRangeStart>{start}</dateRangeStart>
-            <dateRangeEnd>{end}</dateRangeEnd>
-        </serviceRequestAssignmentList>
-    </request>
-    """
-
-    token = f"{BLUEFOLDER_API_TOKEN}:x"
-    encoded_token = base64.b64encode(token.encode("utf-8")).decode("utf-8")
-    headers = {
-        "Authorization": f"Basic {encoded_token}",
-        "Content-Type": "text/xml"
-    }
-
-    try:
-        response = requests.post(BLUEFOLDER_API_URL, data=xml_body.strip(), headers=headers)
-        response.raise_for_status()
-        print("✅ [INFO] Response received from BlueFolder.")
-    except Exception as e:
-        print(f"❌ [ERROR] Failed to fetch assignments: {e}")
-        return []
-
-    try:
-        root = ET.fromstring(response.content)
-        assignments = []
-
-        for item in root.findall("serviceRequestAssignment"):
-            assignment = {}
-
-            for child in item:
-                if child.tag == "assignedTo":
-                    user_id = child.findtext("userId", default="")
-                    assignment["assignedUserId"] = user_id
-                else:
-                    assignment[child.tag] = child.text or ""
-
-            assignments.append(assignment)
-
-        print(f"📦 [INFO] Parsed {len(assignments)} assignments.")
-        save_json("../data/assignments_current.json", assignments)
-        print("💾 [SAVED] Assignments snapshot saved to data/assignments_current.json")
-
-        return assignments
-
-    except Exception as e:
-        print(f"❌ [ERROR] Failed to parse XML: {e}")
-        return []

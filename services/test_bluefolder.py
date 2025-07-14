@@ -2,8 +2,7 @@ import os
 from bluefolder_api import (
     get_all_service_requests,
     match_service_requests,
-    display_matches,
-    fetch_all_assignments
+    display_matches
 )
 
 from dotenv import load_dotenv
@@ -40,4 +39,4 @@ def test_bluefolder_lookup():
         display_matches(matches)
 
 if __name__ == "__main__":
-    fetch_all_assignments()
+    test_bluefolder_lookup()
