@@ -3,6 +3,7 @@ import base64
 import xml.etree.ElementTree as ET
 from typing import Dict, Optional
 
+import re
 # ======= CONFIG =======
 API_TOKEN = "351d49b7-3556-490f-bcf0-eafb266699aa"  # Insert directly
 BASE_URL = "https://app.bluefolder.com/api/2.0/serviceRequests/"
@@ -98,14 +99,13 @@ def test_get_single_requests(service_request_id: str):
     xml_body = f"""
     <request>
         <serviceRequestId>{service_request_id}</serviceRequestId>
-        <externalId></externalId>
-        <groupItemsByType></groupItemsByType>
     </request>
     """
     xml_response = send_bluefolder_request("https://app.bluefolder.com/api/2.0/serviceRequests/get.aspx", xml_body)
     parsed = parse_xml_response(xml_response)
     print("\n=== Single Service Requests ===")
-    pretty_print(parsed)
+    #pretty_print(parsed)
+    print(parse_service_request(xml_response))
 
 
 def test_get_assignments(service_request_id: str):
@@ -140,6 +140,7 @@ def test_get_appointment_list(start_date="", end_date=""):
     print("\n=== Appointments ===")
     # count_list_items(parsed)
     pretty_print(xml_response)
+
 def get_assignment_list(
     service_request_id: Optional[str] = "",
     customer_id: Optional[str] = "",
@@ -180,10 +181,34 @@ def get_assignment_list(
     count_list_items(parsed)
     return parsed
 
+def parse_service_request(xml_str):
+    root = ET.fromstring(xml_str)
+
+    # Extract customer name
+    customer_name = root.findtext('.//customerContactName', default='').strip()
+
+    # Extract customer emails (split on ; or , if present)
+    raw_emails = root.findtext('.//customerContactEmail', default='')
+    customer_emails = [email.strip().lower() for email in re.split(r'[;,]', raw_emails) if email.strip()]
+
+    # Extract status
+    status = root.findtext('.//status', default='').strip()
+
+    # Extract service type and description
+    service_type = root.findtext('.//type', default='').strip()
+    description = root.findtext('.//description', default='').strip()
+    detailed_description = root.findtext('.//detailedDescription', default='').strip()
+    return {
+        "customer_name": customer_name,
+        "customer_emails": customer_emails,
+        "status": status,
+        "email_details": {
+            "type": service_type,
+            "description": description,
+            "detailed_description": detailed_description,
+        }
+    }
 # ======= MAIN =======
 if __name__ == "__main__":
     # Run any tests here
-    get_assignment_list(
-        date_range_start="2025-07-15T00:00:00",
-        date_range_end="2025-07-15T23:59:00",
-    )
+   test_get_single_requests(56105)

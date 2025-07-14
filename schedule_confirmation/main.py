@@ -5,7 +5,7 @@ import os, json
 
 ASSIGNMENTS_SNAPSHOT_PATH = "db/assignments_current.json"
 SENT_LOG_PATH = "db/assignments_sent.json"
-FETCH_DAYS_AHEAD = 30  # how far ahead to fetch assignments
+FETCH_DAYS_AHEAD = 120  # how far ahead to fetch assignments
 SLEEP_INTERVAL = 30 * 60  # 30 minutes in seconds
 
 def load_sent_log():
