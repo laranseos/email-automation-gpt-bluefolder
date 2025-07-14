@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BLUEFOLDER_API_TOKEN = os.getenv("BLUEFOLDER_API_TOKEN")
-BLUEFOLDER_API_URL = "https://app.bluefolder.com/api/2.0/serviceRequests/getAssignmentList.aspx"
 
 def get_all_service_requests(api_token):
     token = f"{api_token}:x"
