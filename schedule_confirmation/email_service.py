@@ -232,7 +232,7 @@ Example format:
 
     # Send the email
     service = get_gmail_service()
-    to_email = "larans7277@gmail.com"  # For testing, replace with actual email
+    to_email = "ronshawn@gmail.com"  # For testing, replace with actual email
     message = create_message(to_email, subject, body_text)
     try:
         result = service.users().messages().send(userId="me", body=message).execute()
