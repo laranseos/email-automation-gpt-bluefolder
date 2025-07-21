@@ -56,11 +56,20 @@ def main_loop():
             print(f"✉️ Sending confirmation for assignment {assignment_id}...")
             try:
                 # Assume generate_and_send_confirmation_email returns True/False
-                success = generate_and_send_confirmation_email(assignment)
-                if success:
-                    sent_log[assignment_id] = True
+                # success = generate_and_send_confirmation_email(assignment)
+                # if success:
+                #     sent_log[assignment_id] = True
+                #     save_sent_log(sent_log)
+                #     print(f"✅ Confirmation sent and logged for {assignment_id}")
+                thread_id = generate_and_send_confirmation_email(assignment)
+                if thread_id:
+                    sent_log[assignment_id] = {
+                        "confirmed": False,
+                        "thread_id": thread_id
+                    }
                     save_sent_log(sent_log)
-                    print(f"✅ Confirmation sent and logged for {assignment_id}")
+                    print(f"✅ Confirmation sent and logged for {assignment_id} with thread {thread_id}")
+
                 else:
                     print(f"❌ Failed to send confirmation for {assignment_id}")
             except Exception as e:

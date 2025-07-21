@@ -237,7 +237,8 @@ Example format:
     try:
         result = service.users().messages().send(userId="me", body=message).execute()
         print(f"✅ Email sent to {to_email}. Message ID: {result['id']}")
-        return True
+        thread_id = result.get("threadId")
+        return thread_id
     except Exception as e:
         print(f"❌ Failed to send email: {e}")
         return False
